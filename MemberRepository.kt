@@ -30,9 +30,9 @@ class RepositoryImpl @Inject constructor(
     private val dao: MyDao,
 ) : MemberRepository {
     // 檢查帳號是否存在
-    suspend fun isEmailExists(account: String): Boolean {
+    suspend fun isEmailExists(email: String): Boolean {
         return withContext(IO) {
-            dao.getMemberByEmail(account) != null
+            dao.getMemberByEmail(email) != null
         }
     }
 
