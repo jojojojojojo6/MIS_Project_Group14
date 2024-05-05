@@ -13,13 +13,13 @@ import kotlinx.coroutines.flow.Flow
 interface MyDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(studentEntity: MemberEntity)
+    suspend fun insert(memeberEntity: MemberEntity)
 
     @Delete
-    suspend fun delete(studentEntity: MemberEntity)
+    suspend fun delete(memberEntity: MemberEntity)
 
     @Update
-    suspend fun update(studentEntity: MemberEntity)
+    suspend fun update(memberEntity: MemberEntity)
 
     @Query("SELECT * FROM MemberEntity")
     fun getAllMember(): Flow<List<MemberEntity>>
