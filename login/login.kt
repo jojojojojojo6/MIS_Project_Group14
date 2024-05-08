@@ -55,6 +55,23 @@ fun Login(modifier: Modifier = Modifier) {
                         .border(0.dp, Color.Transparent, CircleShape)
                 )
             }
+            TextButton(
+                onClick = { },
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                modifier = Modifier
+                    .align(alignment = Alignment.TopStart)
+                    .offset(x = 141.dp, y = 683.dp)
+                    .requiredSize(size = 100.dp)
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.register_button),
+                    contentDescription = "Enter button",
+                    modifier = Modifier
+                        .requiredSize(size = 100.dp)
+                        .clip(shape = CircleShape)
+                        .border(0.dp, Color.Transparent, CircleShape)
+                )
+            }
         }
         val containerColor = Color(0xfffafca3)
         OutlinedTextField(
