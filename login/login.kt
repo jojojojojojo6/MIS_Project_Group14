@@ -64,7 +64,7 @@ fun Login(modifier: Modifier = Modifier) {
                     .requiredSize(size = 100.dp)
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.register_button),
+                    painter = painterResource(id = R.drawable.register_button1),
                     contentDescription = "Enter button",
                     modifier = Modifier
                         .requiredSize(size = 100.dp)
