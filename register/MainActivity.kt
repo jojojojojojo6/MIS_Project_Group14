@@ -88,6 +88,7 @@ fun GeneratedCode(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxSize()
             .background(color = Color(0xffd4e9c0))
+            .verticalScroll(rememberScrollState())  //使介面可滾動
     ) {
         TextButton(
             onClick = { },
@@ -349,9 +350,9 @@ fun GeneratedCode(modifier: Modifier = Modifier) {
         Box(
             modifier = modifier
                 .fillMaxWidth()
-                .align(Alignment.BottomCenter)
+                .align(Alignment.TopCenter)
                 .offset(
-                    y = 250.dp
+                    y = 510.dp
                 )
 
         ) {
@@ -367,9 +368,9 @@ fun GeneratedCode(modifier: Modifier = Modifier) {
             modifier = modifier
                 .requiredWidth(width = 120.dp)
                 .requiredHeight(height = 60.dp)
-                .align(Alignment.BottomCenter)
+                .align(Alignment.TopCenter)
                 .offset(
-                    y = (-50).dp
+                    y = (540).dp
                 )
 
         ) {
