@@ -1,4 +1,4 @@
-package com.example.a0502
+package com.example.myapp.auth
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -6,16 +6,24 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.requiredWidth
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,89 +32,31 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
+import com.example.myapp.DestinationScreen
+import com.example.myapp.HomeViewModel
+import com.example.myapp.R
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
-fun Login(modifier: Modifier = Modifier) {
+fun LoginScreen(
+    navController: NavController,
+    vm: HomeViewModel,
+    modifier: Modifier = Modifier
+) {
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var errorEmail by remember { mutableStateOf(false) }
+    var errorPassword by remember { mutableStateOf(false) }
+
     Box(
         modifier = modifier
-            .requiredWidth(width = 360.dp)
-            .requiredHeight(height = 800.dp)
-            .background(color = Color(0xffd4e9c0)),
-        contentAlignment = Alignment.TopStart // Aligning content within the Box
+            .fillMaxSize()
+            .background(color = Color(0xffd4e9c0))
+            .verticalScroll(rememberScrollState())  //使介面可滾動
     ) {
-        Box(
-            modifier = Modifier
-                .requiredSize(size = 80.dp)
-        ) {
-            TextButton(
-                onClick = { },
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                modifier = Modifier
-                    .align(alignment = Alignment.TopStart)
-                    .offset(x = 141.dp, y = 613.dp)
-                    .requiredSize(size = 80.dp)
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.enter_button),
-                    contentDescription = "Enter button",
-                    modifier = Modifier
-                        .requiredSize(size = 80.dp)
-                        .clip(shape = CircleShape)
-                        .border(0.dp, Color.Transparent, CircleShape)
-                )
-            }
-            TextButton(
-                onClick = { },
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                modifier = Modifier
-                    .align(alignment = Alignment.TopStart)
-                    .offset(x = 141.dp, y = 683.dp)
-                    .requiredSize(size = 100.dp)
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.register_button1),
-                    contentDescription = "Enter button",
-                    modifier = Modifier
-                        .requiredSize(size = 100.dp)
-                        .clip(shape = CircleShape)
-                        .border(0.dp, Color.Transparent, CircleShape)
-                )
-            }
-        }
-        val containerColor = Color(0xfffafca3)
-        OutlinedTextField(
-            value = "",
-            onValueChange = {},
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = containerColor,
-                unfocusedContainerColor = containerColor,
-                disabledContainerColor = containerColor,
-            ),
-            modifier = Modifier
-                .align(alignment = Alignment.TopStart)
-                .offset(x = 76.dp, y = 518.dp)
-                .requiredWidth(width = 210.dp)
-                .requiredHeight(height = 63.dp)
-                .clip(shape = RoundedCornerShape(20.dp))
-                .border(1.dp, Color.Black, RoundedCornerShape(20.dp))
-        )
-        val containerColor1 = Color(0xfffafca3)
-        OutlinedTextField(
-            value = "",
-            onValueChange = {},
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = containerColor1,
-                unfocusedContainerColor = containerColor1,
-                disabledContainerColor = containerColor1,
-            ),
-            modifier = Modifier
-                .align(alignment = Alignment.TopStart)
-                .offset(x = 76.dp, y = 423.dp)
-                .requiredWidth(width = 210.dp)
-                .requiredHeight(height = 63.dp)
-                .clip(shape = RoundedCornerShape(20.dp))
-                .border(1.dp, Color.Black, RoundedCornerShape(20.dp))
-        )
+
         Image(
             painter = painterResource(id = R.drawable.red_cycle),
             contentDescription = "red_cycle",
@@ -139,7 +89,9 @@ fun Login(modifier: Modifier = Modifier) {
                     y = 126.dp
                 )
                 .requiredWidth(width = 253.dp)
-                .requiredHeight(height = 255.dp))
+                .requiredHeight(height = 255.dp)
+        )
+
         TextButton(
             onClick = { },
             colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
@@ -177,12 +129,122 @@ fun Login(modifier: Modifier = Modifier) {
                         .fillMaxSize()
                         .rotate(degrees = -21.75f))
             }
-    }
+        }
+
+        val containerColor1 = Color(0xfffafca3)
+        if(errorEmail){
+            Text(
+                text = "輸入帳號",
+                color = Color.Red,
+                modifier = Modifier.padding(end = 100.dp)
+            )
+        }
+        OutlinedTextField(
+            label = {Text(text = "帳號")},
+            value = email,
+            onValueChange = {email= it},
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = containerColor1,
+                unfocusedContainerColor = containerColor1,
+                disabledContainerColor = containerColor1,
+            ),
+            modifier = Modifier
+                .align(alignment = Alignment.TopStart)
+                .offset(x = 76.dp, y = 423.dp)
+                .requiredWidth(width = 210.dp)
+                .requiredHeight(height = 63.dp)
+                .clip(shape = RoundedCornerShape(20.dp))
+                .border(1.dp, Color.Black, RoundedCornerShape(20.dp))
+        )
+        val containerColor = Color(0xfffafca3)
+        if(errorPassword){
+            Text(
+                text = "輸入密碼",
+                color = Color.Red,
+                modifier = Modifier.padding(end = 100.dp)
+            )
+        }
+        OutlinedTextField(
+            label = {Text(text = "密碼")},
+            value = password,
+            onValueChange = {password = it},
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = containerColor,
+                unfocusedContainerColor = containerColor,
+                disabledContainerColor = containerColor,
+            ),
+            modifier = Modifier
+                .align(alignment = Alignment.TopStart)
+                .offset(x = 76.dp, y = 518.dp)
+                .requiredWidth(width = 210.dp)
+                .requiredHeight(height = 63.dp)
+                .clip(shape = RoundedCornerShape(20.dp))
+                .border(1.dp, Color.Black, RoundedCornerShape(20.dp))
+        )
+
+        Box(
+            modifier = Modifier
+                .requiredSize(size = 80.dp)
+        ) {
+            TextButton(
+                onClick = {if (email.isNotEmpty()) {
+                    errorEmail = false
+                    if (password.isNotEmpty()) {
+                        errorPassword = false
+                        vm.login(email, password)
+                    } else {
+                        errorPassword = true
+                    }
+                }
+                else {
+                    errorEmail = true
+                }},
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                modifier = Modifier
+                    .align(alignment = Alignment.TopStart)
+                    .offset(x = 141.dp, y = 613.dp)
+                    .requiredSize(size = 80.dp)
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.enter_button),
+                    contentDescription = "Enter button",
+                    modifier = Modifier
+                        .requiredSize(size = 80.dp)
+                        .clip(shape = CircleShape)
+                        .border(0.dp, Color.Transparent, CircleShape)
+                )
+                if(vm.signedIn.value){
+                    navController.navigate(DestinationScreen.Main.route)
+                }
+            }
+            TextButton(
+                onClick = { navController.navigate(DestinationScreen.Register.route) },
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                modifier = Modifier
+                    .align(alignment = Alignment.TopStart)
+                    .offset(x = 141.dp, y = 683.dp)
+                    .requiredSize(size = 100.dp)
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.register_button1),
+                    contentDescription = "Enter button",
+                    modifier = Modifier
+                        .requiredSize(size = 100.dp)
+                        .clip(shape = CircleShape)
+                        .border(0.dp, Color.Transparent, CircleShape)
+                )
+            }
+
+        }
     }
 }
 
-@Preview(widthDp = 360, heightDp = 800)
-@Composable
-private fun LoginPreview() {
-    Login()
-}
+//@Preview(widthDp = 360, heightDp = 800)
+//@Composable
+//fun LoginScreenPreview() {
+//    val navController = rememberNavController()
+//    val auth = FirebaseAuth.getInstance()
+//    val vm = remember { HomeViewModel(auth) }
+//
+//    LoginScreen(navController = navController, vm = vm, modifier = Modifier)
+//}
