@@ -1,226 +1,159 @@
-package com.example.myapp.auth
+package com.example.a0601
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeight
-import androidx.compose.foundation.layout.requiredSize
-import androidx.compose.foundation.layout.requiredWidth
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import com.example.myapp.DestinationScreen
-import com.example.myapp.HomeViewModel
-import com.example.myapp.R
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(
-    navController: NavController,
-    vm: HomeViewModel,
-    modifier: Modifier = Modifier
-) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var errorEmail by remember { mutableStateOf(false) }
-    var errorPassword by remember { mutableStateOf(false) }
-
+fun LoginScreen(@StringRes modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(color = Color.White)
-            .verticalScroll(rememberScrollState())  // Make the screen scrollable
+            .verticalScroll(rememberScrollState())
     ) {
+        var passwordVisible = false//先假設在這
         Image(
             painter = painterResource(id = R.drawable.laying_doodle),
             contentDescription = "laying_doodle",
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .offset(x = 1.dp, y = 91.dp)
-                .requiredWidth(320.dp)
-                .requiredHeight(240.dp)
-                .rotate(degrees = -16.54f)
+                .width(350.dp)
+                .height(320.dp)
+                .rotate(degrees = -3.54f)
         )
-
-        Box(
+        Image(
+            painter = painterResource(id = R.drawable.blue_rectangle),
+            contentDescription = "blue_rectangle",
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .offset(x = 1.dp, y = 262.dp)
-                .requiredWidth(360.dp)
-                .requiredHeight(498.dp)
-                .clip(shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp))
-                .background(color = Color(0xffb4cfe2))
+                .offset(x = 1.dp, y = 222.dp)
+                .width(360.dp)
+                .height(615.dp)
+                .clip(RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp))
         )
-
         Text(
             text = "LOGIN",
             color = Color.Black,
-            style = MaterialTheme.typography.displaySmall,
+            style = MaterialTheme.typography.displayMedium,
             modifier = Modifier
                 .align(Alignment.Center)
                 .offset(x = (-91.5).dp, y = (-76.5).dp)
         )
-
-        val containerColor1 = Color(0xffb4cfe2)
-        if (errorEmail) {
-            Text(
-                text = "Please enter account",
-                color = Color.Red,
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(start = 49.dp, top = 360.dp)
-            )
-        }
-
-        OutlinedTextField(
-            label = { Text(text = "Account") },
-            value = email,
-            onValueChange = { email = it },
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = containerColor1,
-                unfocusedContainerColor = containerColor1,
-                disabledContainerColor = containerColor1
+        TextField(
+            value = "",
+            onValueChange = {},
+            colors = TextFieldDefaults.textFieldColors(
+                containerColor = Color.White,
+                unfocusedIndicatorColor = Color.Transparent,
+                disabledIndicatorColor = Color.Transparent
             ),
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .offset(x = 49.dp, y = 377.dp)
-                .requiredWidth(255.dp)
-                .requiredHeight(46.dp)
-                .clip(shape = RoundedCornerShape(15.dp))
-                .border(1.dp, Color.Black, RoundedCornerShape(20.dp))
+                .width(255.dp)
+                .height(46.dp)
+                .clip(RoundedCornerShape(15.dp))
         )
-
-        val containerColor = Color(0xffb4cfe2)
-        var passwordVisible by remember { mutableStateOf(false) }
-        if (errorPassword) {
-            Text(
-                text = "Please enter password",
-                color = Color.Red,
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(start = 49.dp, top = 429.dp)
-            )
-        }
-
-        OutlinedTextField(
-            label = { Text(text = "Password") },
-            value = password,
-            onValueChange = { password = it },
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = containerColor,
-                unfocusedContainerColor = containerColor,
-                disabledContainerColor = containerColor
+        Text(
+            text = "account",
+            color = Color.Black.copy(alpha = 0.31f),
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier
+                .align(Alignment.Center)
+                .offset(x = (-71.5).dp, y = 0.dp)
+        )
+        TextField(
+            value = "",
+            onValueChange = {},
+            colors = TextFieldDefaults.textFieldColors(
+                containerColor = Color.White,
+                unfocusedIndicatorColor = Color.Transparent,
+                disabledIndicatorColor = Color.Transparent
             ),
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
+
                 val image = if (passwordVisible) R.drawable.ic_visibility else R.drawable.ic_visibility_off
-                IconButton(onClick = { passwordVisible = !passwordVisible }, modifier = Modifier.size(24.dp)) {
+                IconButton(onClick = { passwordVisible = !passwordVisible },
+                    modifier = Modifier.size(54.dp)
+                )
+                {
                     Icon(painter = painterResource(id = image), contentDescription = null)
                 }
             },
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .offset(x = 49.dp, y = 449.dp)
-                .requiredWidth(255.dp)
-                .requiredHeight(46.dp)
-                .clip(shape = RoundedCornerShape(15.dp))
-                .border(1.dp, Color.Black, RoundedCornerShape(20.dp))
+                .width(255.dp)
+                .height(46.dp)
+                .clip(RoundedCornerShape(15.dp))
         )
-
-        TextButton(
-            onClick = { /* Implement login functionality */ },
+        Text(
+            text = "password",
+            color = Color.Black.copy(alpha = 0.31f),
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier
+                .align(Alignment.Center)
+                .offset(x = (-62.5).dp, y = 72.dp)
+        )
+        Button(
+            onClick = { },
+            shape = RoundedCornerShape(80.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .offset(x = 240.dp, y = 521.dp)
-                .requiredWidth(100.dp)
-                .requiredHeight(46.dp)
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.login_button),
-                contentDescription = "Enter button",
-                modifier = Modifier
-                    .requiredSize(80.dp)
-                    .clip(shape = CircleShape)
-                    .border(0.dp, Color.Transparent, CircleShape)
-            )
-        }
-
-        TextButton(
-            onClick = { /* Implement forget password functionality */ },
+                .width(100.dp)
+                .height(50.dp)
+        ){}
+        Text(
+            text = "log in",
+            color = Color.White,
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier
+                .align(Alignment.Center)
+                .offset(x = 110.dp, y = 146.dp)
+        )
+        Button(
+            onClick = { },
             colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
             modifier = Modifier
-                .align(Alignment.TopStart)
-                .offset(x = 49.dp, y = 571.dp)
-                .requiredWidth(100.dp)
-                .requiredHeight(46.dp)
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.forget_password),
-                contentDescription = "Forgot Password button",
-                modifier = Modifier
-                    .requiredSize(80.dp)
-                    .clip(shape = CircleShape)
-                    .border(0.dp, Color.Transparent, CircleShape)
-            )
-        }
-
-        TextButton(
-            onClick = { navController.navigate(DestinationScreen.Register.route) },
+                .align(Alignment.Center)
+                .offset(x = 0.5.dp, y = 221.5.dp)
+        ) {Text(text = "Sign up", color = Color.Black)}
+        Button(
+            onClick = { },
             colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
             modifier = Modifier
-                .align(Alignment.TopStart)
-                .offset(x = 49.dp, y = 621.dp)
-                .requiredWidth(100.dp)
-                .requiredHeight(46.dp)
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.sign_up),
-                contentDescription = "Sign Up button",
-                modifier = Modifier
-                    .requiredSize(80.dp)
-                    .clip(shape = CircleShape)
-                    .border(0.dp, Color.Transparent, CircleShape)
-            )
-        }
+                .align(Alignment.Center)
+                .offset(x = 0.5.dp, y = 248.5.dp)
+        ) {Text(text = "Forget password？", color = Color.Black)}
+
     }
 }
 
 @Preview(widthDp = 360, heightDp = 800)
 @Composable
 private fun LoginPreview() {
-    val navController = rememberNavController()
-    val vm = HomeViewModel()
-    LoginScreen(navController = navController, vm = homeViewModel)
+    LoginScreen()
 }
-
