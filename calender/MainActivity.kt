@@ -1,0 +1,694 @@
+package com.example.myapplication5
+
+import android.annotation.SuppressLint
+import android.app.DatePickerDialog
+import android.os.Build
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+//import androidx.compose.foundation.layout.ColumnScopeInstance.weight
+//import androidx.compose.foundation.layout.FlowColumnScopeInstance.weight
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.myapplication5.ui.theme.MyApplication5Theme
+import java.time.LocalDate
+import java.time.format.TextStyle
+import java.time.DayOfWeek
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.util.Calendar
+import java.util.Locale
+
+// 使用者事件的資料類別
+data class UserEntry(
+    val name: String,
+    val startTime: String,
+    val endTime: String,
+    val date: String,
+    val tags: List<String> = emptyList(),
+    val notes: String = "",
+    val alarmTime: String,
+    val repeat: String = ""
+) {
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun getStartTime(): LocalTime {
+        return LocalTime.parse(startTime, DateTimeFormatter.ofPattern("H:mm"))
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun getEndTime(): LocalTime {
+        return LocalTime.parse(endTime, DateTimeFormatter.ofPattern("H:mm"))
+    }
+}
+
+// 儲存顯示在日程中的名稱、日期和小時
+data class Event(
+    val name: String,
+    val date: LocalDate,
+    val startTime: LocalTime,
+    val endTime: LocalTime
+)
+
+class MainActivity : ComponentActivity() {
+    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContent {
+            val today = LocalDate.now()
+            // 定義當前日期為今天
+            //val events = remember {
+                //mutableStateListOf(
+                    //Event("睡覺", LocalDate.now(), 1),
+                    //Event("睡覺", LocalDate.now().plusDays(1), 1),
+                    //Event("睡覺", LocalDate.now().plusDays(2), 1),
+                    //Event("睡覺", LocalDate.now().plusDays(3), 1),
+                    //Event("睡覺", LocalDate.now().plusDays(4), 1),
+                //)
+            //}
+            val userEntries = remember { mutableStateListOf<UserEntry>() }
+            // 將 UserEntry 轉換為 Event 類型，這樣可以統一顯示
+            val events = userEntries.map { entry ->
+                val formatter = DateTimeFormatter.ofPattern("d/M/yyyy")
+                val date = LocalDate.parse(entry.date, formatter)
+                Event(
+                    name = entry.name,
+                    date = date,
+                    startTime = entry.getStartTime(),
+                    endTime = entry.getEndTime(),
+                )
+            }
+            var showDialog by remember { mutableStateOf(false) }
+            // 建立週曆視圖
+            WeeklyCalendarView(
+                modifier = Modifier,
+                currentDay = today,
+                events = events,
+                onNextWeek = {},
+                onPreviousWeek = {},
+                //onNextWeek = { setCurrentDay(currentDay.plusWeeks(1)) },
+                //onPreviousWeek = { setCurrentDay(currentDay.minusWeeks(1)) },
+                onSwitchToMonthView = { /* TODO: 切換至月視圖的處理邏輯 */ }
+                //onAddEvent = { }
+            )
+        }
+    }
+
+
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun UserInputDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String, String, String, String, List<String>, String, Boolean, String) -> Unit,
+    selectedHour: String
+) {
+    val context = LocalContext.current
+    var name by remember { mutableStateOf(TextFieldValue("")) }
+    var startTime by remember { mutableStateOf(selectedHour) }
+    var endTime by remember { mutableStateOf("") }
+    var date by remember { mutableStateOf("") }
+    var tags by remember { mutableStateOf(TextFieldValue("")) }
+    var notes by remember { mutableStateOf(TextFieldValue("")) }
+    var alarmTime by remember { mutableStateOf("") }
+    var repeat by remember { mutableStateOf("") }
+    var autoSchedule by remember { mutableStateOf(false) }
+    var showStartTimeDialog by remember { mutableStateOf(false) }
+    var showEndTimeDialog by remember { mutableStateOf(false) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showAlarmTimeDialog by remember { mutableStateOf(false) }
+    val timeState = rememberTimePickerState(
+        initialHour = 0,
+        initialMinute = 0
+    )
+
+    // Function to format the date to a string
+    fun formatDate(year: Int, month: Int, day: Int): String {
+        return "$day/${month + 1}/$year"
+    }
+    //新增事件，基本上那個框框的順序跟這個裡面是一致得
+    AlertDialog(
+        modifier = Modifier.wrapContentWidth(),
+        onDismissRequest = onDismiss,
+        title = { Text(text = "新增事件", color = Color.Black) },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("事件名稱", color = Color.Black) }
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("日期:", color = Color.Black)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = { showDatePicker = true },
+                        colors = ButtonDefaults.run { buttonColors(colorResource(id = R.color.light_blue)) }
+                    ) {
+                        Text(if (date.isBlank()) "選擇日期" else date, color = Color.White)
+                    }
+                    if (showDatePicker) {
+                        val calendar = Calendar.getInstance()
+                        DatePickerDialog(
+                            context,
+                            { _, year, month, dayOfMonth ->
+                                date = formatDate(year, month, dayOfMonth)
+                                showDatePicker = false
+                            },
+                            calendar.get(Calendar.YEAR),
+                            calendar.get(Calendar.MONTH),
+                            calendar.get(Calendar.DAY_OF_MONTH)
+                        ).apply {
+                            setOnShowListener {
+                                getButton(DatePickerDialog.BUTTON_POSITIVE).setTextColor(android.graphics.Color.BLACK)
+                                getButton(DatePickerDialog.BUTTON_NEGATIVE).setTextColor(android.graphics.Color.LTGRAY)
+                                getButton(DatePickerDialog.BUTTON_NEUTRAL).setTextColor(android.graphics.Color.GRAY)
+                            }
+                        }.show()
+                    }
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("開始時間:", color = Color.Black)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = { showStartTimeDialog = true },
+                        colors = ButtonDefaults.run { buttonColors(colorResource(id = R.color.light_blue)) }
+                    ) {
+                        Text(startTime.ifBlank { "選擇開始時間" }, color = Color.White)
+                    }
+                    if (showStartTimeDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showStartTimeDialog = false },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .background(color = Color.LightGray.copy(alpha = .3f))
+                                    .padding(top = 28.dp, start = 20.dp, end = 20.dp, bottom = 12.dp),
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                TimePicker(state = timeState)
+                                Row(
+                                    modifier = Modifier
+                                        .padding(top = 12.dp)
+                                        .fillMaxWidth(), horizontalArrangement = Arrangement.End
+                                ) {
+                                    TextButton(onClick = { showStartTimeDialog = false }) {
+                                        Text(text = "取消", color = Color.Black)
+                                    }
+                                    TextButton(onClick = {
+                                        showStartTimeDialog = false
+                                        startTime = "${timeState.hour}:${timeState.minute}"
+                                    }) {
+                                        Text(text = "確認", color = Color.Black)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("結束時間:", color = Color.Black)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = { showEndTimeDialog = true },
+                        colors = ButtonDefaults.run { buttonColors(colorResource(id = R.color.light_blue)) }
+                    ) {
+                        Text(endTime.ifBlank { "選擇結束時間" }, color = Color.White)
+                    }
+                    if (showEndTimeDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showEndTimeDialog = false },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .background(color = Color.LightGray.copy(alpha = .3f))
+                                    .padding(top = 28.dp, start = 20.dp, end = 20.dp, bottom = 12.dp),
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                TimePicker(state = timeState)
+                                Row(
+                                    modifier = Modifier
+                                        .padding(top = 12.dp)
+                                        .fillMaxWidth(), horizontalArrangement = Arrangement.End
+                                ) {
+                                    TextButton(onClick = { showEndTimeDialog = false }) {
+                                        Text(text = "取消", color = Color.Black)
+                                    }
+                                    TextButton(onClick = {
+                                        showEndTimeDialog = false
+                                        endTime = "${timeState.hour}:${timeState.minute}"
+                                    }) {
+                                        Text(text = "確認", color = Color.Black)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                OutlinedTextField(
+                    value = tags,
+                    onValueChange = { tags = it },
+                    label = { Text("標籤 (逗號分隔)", color = Color.Black) }
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("自動排程:", color = Color.Black)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Switch(
+                        checked = autoSchedule,
+                        onCheckedChange = { autoSchedule = it },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = colorResource(id = R.color.light_blue),
+                            uncheckedThumbColor = Color.Gray
+                        )
+                    )
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("設定提醒時間:", color = Color.Black)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = { showAlarmTimeDialog = true },
+                        colors = ButtonDefaults.run { buttonColors(colorResource(id = R.color.light_blue)) }
+                    ) {
+                        Text(alarmTime.ifBlank { "選擇提醒時間" }, color = Color.White)
+                    }
+                    if (showAlarmTimeDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showAlarmTimeDialog = false },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .background(color = Color.LightGray.copy(alpha = .3f))
+                                    .padding(top = 28.dp, start = 20.dp, end = 20.dp, bottom = 12.dp),
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                TimePicker(state = timeState)
+                                Row(
+                                    modifier = Modifier
+                                        .padding(top = 12.dp)
+                                        .fillMaxWidth(), horizontalArrangement = Arrangement.End
+                                ) {
+                                    TextButton(onClick = { showAlarmTimeDialog = false }) {
+                                        Text(text = "取消", color = Color.Black)
+                                    }
+                                    TextButton(onClick = {
+                                        showAlarmTimeDialog = false
+                                        alarmTime = "${timeState.hour}:${timeState.minute}"
+                                    }) {
+                                        Text(text = "確認", color = Color.Black)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                OutlinedTextField(
+                    value = repeat,
+                    onValueChange = { repeat = it },
+                    label = { Text("重複", color = Color.Black) }
+                )
+                OutlinedTextField(
+                    value = notes,
+                    onValueChange = { notes = it },
+                    label = { Text("備註", color = Color.Black) }
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onConfirm(
+                        name.text,
+                        startTime,
+                        endTime,
+                        date,
+                        tags.text.split(",").map { it.trim() },
+                        notes.text,
+                        autoSchedule,
+                        alarmTime
+                    )
+                },
+                colors = ButtonDefaults.run { buttonColors(colorResource(id = R.color.light_blue)) }
+            ) {
+                Text("新增事件", color = Color.White)
+            }
+        },
+        dismissButton = {
+            Button(
+                onClick = onDismiss,
+                colors = ButtonDefaults.run { buttonColors(colorResource(id = R.color.light_blue)) }
+            ) {
+                Text("取消", color = Color.White)
+            }
+        }
+    )
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+private fun DayCell(
+    day: LocalDate,
+    isToday: Boolean,
+    isSelected: Boolean = false,
+    onDateSelected: (LocalDate) -> Unit
+) {
+    val backgroundColor = when {
+        isToday -> Color.Blue
+        isSelected -> Color.LightGray
+        else -> Color.Transparent
+    }
+    val textColor = if (isToday) Color.Red else Color.Black
+
+    Box(
+        modifier = Modifier
+            .padding(horizontal = 15.dp, vertical = 6.dp)
+            .size(30.dp)
+            .clip(CircleShape)
+            .background(colorResource(id = R.color.light_blue))
+            .clickable { onDateSelected(day) },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = day.dayOfMonth.toString(),
+            color = textColor
+        )
+    }
+}
+
+/*@RequiresApi(Build.VERSION_CODES.O)  //目前沒用到
+@Composable
+fun DailyEventsView(currentDay: LocalDate) {
+    val events = remember {
+        mutableStateListOf(
+            Event("睡覺", LocalDate.now(), 1),
+            Event("睡覺", LocalDate.now().plusDays(1), 1),
+            Event("睡覺", LocalDate.now().plusDays(2), 1),
+            //Event("睡覺", LocalDate.now().plusDays(3), 1),
+            //Event("睡覺", LocalDate.now().plusDays(4), 1),
+
+        )
+    }// 示例事件
+
+}*/
+
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun WeeklyCalendarView(
+    modifier: Modifier = Modifier,
+    currentDay: LocalDate,
+    events: List<Event>,
+    onNextWeek: () -> Unit,
+    onPreviousWeek: () -> Unit,
+    onSwitchToMonthView: () -> Unit,
+    //onAddEvent: () -> Unit
+) {
+    // 紀錄選擇的日期
+    val selectedDate = remember { mutableStateOf(currentDay) }
+    var showDialog by remember { mutableStateOf(false) }
+    var selectedHour by remember { mutableStateOf("") }
+
+    // 管理使用者輸入的行事曆項目
+    val userEntries = remember { mutableStateListOf<UserEntry>() }
+    val currentDate = remember { mutableStateOf(LocalDate.now()) }
+
+    // 將 UserEntry 轉換為 Event 類型，這樣可以統一顯示
+    val events = userEntries.map { entry ->
+        val formatter = DateTimeFormatter.ofPattern("d/M/yyyy")
+        val date = LocalDate.parse(entry.date, formatter)
+        Event(
+            name = entry.name,
+            date = date,
+            startTime = entry.getStartTime(),
+            endTime = entry.getEndTime(),
+        )
+    }
+
+    Scaffold(modifier = modifier.fillMaxSize()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            // 月視圖和新增事件按鈕
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // 切換至月視圖的按鈕
+                IconButton(
+                    onClick = onSwitchToMonthView,
+                    modifier = modifier
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.change),
+                        contentDescription = "Change to Month View",
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                // 顯示當前月份和年份的文字
+                Box(
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                ) {
+                    Text(
+                        "${currentDay.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} ${currentDay.year}",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Color.Black,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+
+                // 新增事件的按鈕
+                IconButton(
+                    onClick = { showDialog = true } ,
+                    modifier = modifier
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.add),
+                        contentDescription = "Add Event",
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+
+            // 星期顯示，靠右對齊
+            Row(
+                horizontalArrangement = Arrangement.End,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Spacer(modifier = Modifier.weight(5f)) // 推動星期顯示靠右
+                // 顯示選擇日期的前後五天的星期縮寫
+                for (i in -2..2) {
+                    val dayOfWeek = selectedDate.value.plusDays(i.toLong()).dayOfWeek
+                    Text(
+                        text = dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault()),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(horizontal = 14.dp)
+                    )
+                }
+            }
+
+            // 日期行，顯示選擇日期的前後五天
+            Row(
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Spacer(modifier = Modifier.weight(5f)) // 推動星期顯示靠右
+                for (i in -2..2) {
+                    val date = selectedDate.value.plusDays(i.toLong())
+                    DayCell(
+                        day = date,
+                        isToday = date == LocalDate.now(),
+                        isSelected = selectedDate.value == date,
+                        onDateSelected = { selectedDate.value = it }
+                    )
+                }
+            }
+
+            // 每小時時間軸，顯示選擇日期的前後兩天共五天的每小時事件
+            LazyColumn(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                items(24) { hour ->
+                    val hourString = hour.toString().padStart(2, '0')
+                    HourlyRow(hourString, selectedDate.value, events)
+                }
+            }
+
+            if (showDialog) {
+                UserInputDialog(
+                    onDismiss = { showDialog = false },
+                    onConfirm = { name, startTime, endTime, date, tags, notes, alarmTime, repeat ->
+                        userEntries.add(    //確定新增事件，將事件添加到事件列表
+                            UserEntry(
+                                name,
+                                startTime,
+                                endTime,
+                                date,
+                                tags,
+                                notes,
+                                alarmTime.toString(),
+                                repeat
+                            )
+                        )
+                        showDialog = false
+                    },
+                    selectedHour = selectedHour
+                )
+            }
+
+            // 當天行程
+            //Text("下面是當天行程", style = MaterialTheme.typography.bodyLarge)
+            //DailyEventsView(selectedDate.value)
+        }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable  //時間軸
+fun HourlyRow(hour: String, selectedDate: LocalDate, events: List<Event>) {
+    // 選擇的日期為中心，加減兩天共五天
+    val days = (-2..2).map { selectedDate.plusDays(it.toLong()) }
+    val hourInt = hour.toInt()
+
+    Column {
+        Divider (  //每列分隔線
+            color = Color.Black,
+            modifier = Modifier
+                .height(1.dp)
+                .fillMaxWidth()
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                //.bottomBorder(1.dp, Color.Black)
+        ) {
+            // 顯示每小時的時間
+            Text(
+                text = "$hour:00",
+                modifier = Modifier
+                    .width(60.dp)
+                    .padding(horizontal = 8.dp),
+                textAlign = TextAlign.Center,
+                color = Color.Black
+            )
+            Divider(modifier = Modifier.width(1.dp)) //時數跟事件表的分隔線
+            // 顯示每小時的事件框
+            for (day in days) {
+                val dayEvents = events.filter { it.date == day && it.startTime.hour <= hourInt && it.endTime.hour >= hourInt }
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(40.dp)
+                        .background(Color.White)
+                ) {
+                    // 查找事件列表中符合當前日期和小時的事件
+                    //val event = events.find { it.date == day && (it.startTime.hour <= hourInt && it.endTime.hour >= hourInt) }
+                    //event?.let {
+                    Column(
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        // 使用 items 函數顯示事件
+                        LazyColumn(
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            items(dayEvents.size) {  index ->
+                                val event = dayEvents[index]
+                                Column(
+                                    //modifier = Modifier.align(Alignment.Center),
+                                    verticalArrangement = Arrangement.Center,
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = event.name,
+                                        color = Color.Black,
+                                        modifier = Modifier
+                                            .background(Color.LightGray)
+                                            .padding(4.dp)
+                                    )
+                                    Text(
+                                        text = "${event.startTime} - ${event.endTime}",
+                                        color = Color.Gray,
+                                        fontSize = 12.sp
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                Divider(modifier = Modifier.width(1.dp))  //天數分隔線
+            }
+        }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Preview(showBackground = true)
+@Composable
+fun WeeklyCalendarPreview() {
+    /*val events = remember {
+        mutableStateListOf(
+            Event("睡覺", LocalDate.now(), 1),
+            Event("睡覺", LocalDate.now().plusDays(1), 1),
+            Event("睡覺", LocalDate.now().plusDays(2), 1),
+            Event("睡覺", LocalDate.now().plusDays(3), 1),
+            Event("睡覺", LocalDate.now().plusDays(4), 1),
+            Event("睡覺", LocalDate.now().plusDays(5), 1)
+        )
+    }*/
+    val userEntries = remember { mutableStateListOf<UserEntry>() }
+    // 將 UserEntry 轉換為 Event 類型，這樣可以統一顯示
+    val events = userEntries.map { entry ->
+        val formatter = DateTimeFormatter.ofPattern("d/M/yyyy")
+        val date = LocalDate.parse(entry.date, formatter)
+        Event(
+            name = entry.name,
+            date = date,
+            startTime = entry.getStartTime(),
+            endTime = entry.getEndTime(),
+        )
+    }
+
+    WeeklyCalendarView(
+        currentDay = LocalDate.now(),
+        events = events,
+        onNextWeek = {},
+        onPreviousWeek = {},
+        onSwitchToMonthView = {},
+        //onAddEvent = {}
+    )
+}
